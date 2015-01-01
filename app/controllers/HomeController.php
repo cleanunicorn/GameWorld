@@ -34,7 +34,7 @@ class HomeController extends BaseController {
     
     public function getLogged()
     {
-        $owned_games = Steam::player(Session::get('steam_id'))->GetOwnedGames();
+        $owned_games = Steam::player(Session::get('steam_id'))->GetOwnedGames(true, true);
         
         print_r($owned_games->toArray());
     }
