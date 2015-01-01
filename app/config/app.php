@@ -125,6 +125,8 @@ return array(
         'Syntax\SteamApi\SteamApiServiceProvider',
         // Steam OpenID Authentication 
         'Ehesp\SteamLogin\Laravel\SteamLoginServiceProvider',
+        // Neo4j client
+        'Artdarek\Neo4j\Neo4jServiceProvider',
 
 	),
 
