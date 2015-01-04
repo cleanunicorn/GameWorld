@@ -127,6 +127,8 @@ return array(
         'Ehesp\SteamLogin\Laravel\SteamLoginServiceProvider',
         // Neo4j client
         'Artdarek\Neo4j\Neo4jServiceProvider',
+        // Way Generators
+        'Way\Generators\GeneratorsServiceProvider',
 
 	),
 

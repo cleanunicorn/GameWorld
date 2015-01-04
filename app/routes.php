@@ -14,3 +14,4 @@
 Route::get('/', 'HomeController@getHome');
 Route::get('/login', 'HomeController@getLogin');
 Route::get('/logged', 'HomeController@getLogged');
+Route::get('/friends/{SteamId}', 'HomeController@getFriends');
