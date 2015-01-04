@@ -50,7 +50,7 @@ class HomeController extends BaseController {
             $player_create_string = "
                 CREATE (n:Player {
                     steamId: '{$player->steamId}',
-                    personaName: '". addslashes($friend->personaName) ."',
+                    personaName: '". addslashes($player->personaName) ."',
                     lastLogoff: '{$player->lastLogoff}',
                     profileUrl: '{$player->profileUrl}',
                     avatarUrl: '{$player->avatarUrl}',
