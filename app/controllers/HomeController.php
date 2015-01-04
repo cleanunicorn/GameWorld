@@ -232,7 +232,7 @@ class HomeController extends BaseController {
         foreach($owned_games as $game)
         {
             // Check if the game is already saved
-            $game_match_query_string = "MATCH (n { appId: {$game->appId}}) RETURN n";
+            $game_match_query_string = "MATCH (n { appId: '{$game->appId}'}) RETURN n";
             $game_match_query = new Everyman\Neo4j\Cypher\Query($client, $game_match_query_string);
             $game_match_result = $game_match_query->getResultSet();
             if (count($game_match_result) == 0)
