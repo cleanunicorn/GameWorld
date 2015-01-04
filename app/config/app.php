@@ -123,10 +123,8 @@ return array(
 		'Illuminate\Workbench\WorkbenchServiceProvider',
         // Steam API
         'Syntax\SteamApi\SteamApiServiceProvider',
-        // Steam OpenID Authentication 
+        // Steam OpenID Authentication
         'Ehesp\SteamLogin\Laravel\SteamLoginServiceProvider',
-        // Neo4j client
-        'Artdarek\Neo4j\Neo4jServiceProvider',
         // Way Generators
         'Way\Generators\GeneratorsServiceProvider',
 

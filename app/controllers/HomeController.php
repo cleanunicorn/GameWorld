@@ -47,35 +47,27 @@ class HomeController extends BaseController {
         if (count($player_match_result) == 0)
         {
             // Add the player to database
-            $player_node = Neo4j::makeNode();
-            $player_node->setProperty('steamId', $player->steamId);
-            $player_node->setProperty('personaName', $player->personaName);
-            $player_node->setProperty('lastLogoff', $player->lastLogoff);
-            $player_node->setProperty('profileUrl', $player->profileUrl);
-            $player_node->setProperty('avatarUrl', $player->avatarUrl);
-            $player_node->setProperty('avatarMediumUrl', $player->avatarMediumUrl);
-            $player_node->setProperty('avatarFullUrl', $player->avatarFullUrl);
-            $player_node->setProperty('personaStateId', $player->personaStateId);
-            $player_node->setProperty('realName', $player->realName);
-            $player_node->setProperty('primaryClanId', $player->primaryClanId);
-            $player_node->setProperty('timecreated', $player->timecreated);
-            $player_node->setProperty('locCountryCode', $player->locCountryCode);
-            $player_node->setProperty('locStateCode', $player->locStateCode);
-            $player_node->setProperty('locCityId', $player->locCityId);
-            $player_node->save();
-
-            $player_node_id = $player_node->getId();
-        }
-        else
-        {
-            $player_node_id = $player_match_result[0]['n']->getId();
-            $player_node = Neo4j::getNode($player_node_id);
-        }
-
-        $player_plays = $player_node->getRelationships(array('PLAYS'));
-        foreach($player_plays as $player_play)
-        {
-            $player_play->delete();
+            $player_create_string = "
+                CREATE (n:Player {
+                    steamId: '{$player->steamId}',
+                    personaName: '". addslashes($friend->personaName) ."',
+                    lastLogoff: '{$player->lastLogoff}',
+                    profileUrl: '{$player->profileUrl}',
+                    avatarUrl: '{$player->avatarUrl}',
+                    avatarMediumUrl: '{$player->avatarMediumUrl}',
+                    avatarFullUrl: '{$player->avatarFullUrl}',
+                    personaStateId: '{$player->personaStateId}',
+                    realName: '{$player->realName}',
+                    primaryClanId: '{$player->primaryClanId}',
+                    timecreated: '{$player->timecreated}',
+                    locCountryCode: '{$player->locCountryCode}',
+                    locStateCode: '{$player->locStateCode}',
+                    locCityId: '{$player->locCityId}'
+                })
+                RETURN n
+            ";
+            $player_create_query = new Everyman\Neo4j\Cypher\Query($client, $player_create_string);
+            $player_create_result = $player_create_query->getResultSet();
         }
 
         foreach($owned_games as $game)
@@ -87,40 +79,39 @@ class HomeController extends BaseController {
             if (count($game_match_result) == 0)
             {
                 // Add games to database
-                $game_node = Neo4j::makeNode();
-                $game_node->setProperty('appId', $game->appId);
-                $game_node->setProperty('name', $game->name);
-                $game_node->setProperty('icon', $game->icon);
-                $game_node->setProperty('logo', $game->logo);
-                $game_node->setProperty('header', $game->header);
-                $game_node->save();
-
-                $game_node_id = $game_node->getId();
-            }
-            else
-            {
-                $game_node_id = $game_match_result[0]['n']->getId();
-                $game_node = Neo4j::getNode($game_node_id);
+                $game_create_string = "
+                    CREATE (n:Game {
+                        appId: '{$game->appId}',
+                        name: '". addslashes($game->name) ."',
+                        icon: '{$game->icon}',
+                        logo: '{$game->logo}',
+                        header: '{$game->header}'
+                    })
+                    RETURN n
+                ";
+                $game_create_query = new Everyman\Neo4j\Cypher\Query($client, $game_create_string);
+                $game_create_result = $game_create_query->getResultSet();
             }
 
-            // Create relationship between the player and the game
-            $player_node->relateTo(
-                    $game_node
-                    , 'PLAYS'
-                )
-                ->setProperty(
-                    'playtimeTwoWeeks'
-                    , $game->playtimeTwoWeeks
-                )
-                ->setProperty(
-                    'playtimeForever'
-                    , $game->playtimeForever
-                )
-                ->save();
+            $player_plays_game_string = "
+                MATCH
+                    (n:Player {steamId: '{$player->steamId}'}), (m:Game {appId:'{$game->appId}'})
+                CREATE UNIQUE
+                    (n)-[r:PLAYS]->(m)
+                SET
+                    r.appId='{$game->appId}',
+                    r.name='". addslashes($game->name) ."',
+                    r.icon='{$game->icon}',
+                    r.logo='{$game->logo}',
+                    r.header='{$game->header}'
+                RETURN n,r,m
+            ";
+            $player_plays_game_query = new Everyman\Neo4j\Cypher\Query($client, $player_plays_game_string);
+            $player_plays_game_result = $player_plays_game_query->getResultSet();
+
         }
 
         print_r(Steam::user(Session::get('steam_id'))->GetPlayerSummaries()[0]);
-
         print_r($owned_games->toArray());
     }
 
@@ -140,7 +131,7 @@ class HomeController extends BaseController {
             dd('Dude is not here');
         }
 
-        $player_original = Neo4j::getNode($player_original_match_result[0]['n']->getId());
+        $player_original = $player_original_match_result[0]['n'];
 
         foreach($friends as $friend)
         {
@@ -151,59 +142,132 @@ class HomeController extends BaseController {
             if (count($player_match_result) == 0)
             {
                 // Add the player to database
-                $player_node = Neo4j::makeNode();
-                $player_node->setProperty('steamId', $friend->steamId);
-                $player_node->setProperty('personaName', $friend->personaName);
-                $player_node->setProperty('lastLogoff', $friend->lastLogoff);
-                $player_node->setProperty('profileUrl', $friend->profileUrl);
-                $player_node->setProperty('avatarUrl', $friend->avatarUrl);
-                $player_node->setProperty('avatarMediumUrl', $friend->avatarMediumUrl);
-                $player_node->setProperty('avatarFullUrl', $friend->avatarFullUrl);
-                $player_node->setProperty('personaStateId', $friend->personaStateId);
-                $player_node->setProperty('realName', $friend->realName);
-                $player_node->setProperty('primaryClanId', $friend->primaryClanId);
-                $player_node->setProperty('timecreated', $friend->timecreated);
-                $player_node->setProperty('locCountryCode', $friend->locCountryCode);
-                $player_node->setProperty('locStateCode', $friend->locStateCode);
-                $player_node->setProperty('locCityId', $friend->locCityId);
-                $player_node->save();
-
-                $player_node_id = $player_node->getId();
+                $player_create_string = "
+                    CREATE (n:Player {
+                        steamId: '{$friend->steamId}',
+                        personaName: '". addslashes($friend->personaName) ."',
+                        lastLogoff: '{$friend->lastLogoff}',
+                        profileUrl: '{$friend->profileUrl}',
+                        avatarUrl: '{$friend->avatarUrl}',
+                        avatarMediumUrl: '{$friend->avatarMediumUrl}',
+                        avatarFullUrl: '{$friend->avatarFullUrl}',
+                        personaStateId: '{$friend->personaStateId}',
+                        realName: '{$friend->realName}',
+                        primaryClanId: '{$friend->primaryClanId}',
+                        timecreated: '{$friend->timecreated}',
+                        locCountryCode: '{$friend->locCountryCode}',
+                        locStateCode: '{$friend->locStateCode}',
+                        locCityId: '{$friend->locCityId}'
+                    })
+                    RETURN n
+                ";
+                $player_create_query = new Everyman\Neo4j\Cypher\Query($client, $player_create_string);
+                $player_create_result = $player_create_query->getResultSet();
 
                 echo "Created steamId : {$friend->steamId} ({$friend->personaName}) <br />\n";
             }
-            else
-            {
-                $player_node_id = $player_match_result[0]['n']->getId();
-                $player_node = Neo4j::getNode($player_node_id);
 
-                echo "Already there steamId : {$friend->steamId} ({$friend->personaName}) <br />\n";
+            // Add friend relationship from original player to friend
+            $player_friend_player_string = "
+                MATCH
+                    (n:Player {steamId: '{$player_original->steamId}'}), (m:Player {steamId:'{$friend->steamId}'})
+                CREATE UNIQUE
+                    (n)-[r:FRIEND]->(m)
+                RETURN n,r,m
+            ";
+            $player_friend_player_query = new Everyman\Neo4j\Cypher\Query($client, $player_friend_player_string);
+            $player_friend_player_result = $player_friend_player_query->getResultSet();
+
+            // Add friend relationship from friend to original player
+            $player_friend_player_string = "
+                MATCH
+                    (n:Player {steamId: '{$player_original->steamId}'}), (m:Player {steamId:'{$friend->steamId}'})
+                CREATE UNIQUE
+                    (m)-[r:FRIEND]->(n)
+                RETURN n,r,m
+            ";
+            $player_friend_player_query = new Everyman\Neo4j\Cypher\Query($client, $player_friend_player_string);
+            $player_friend_player_result = $player_friend_player_query->getResultSet();
+        }
+    }
+
+    public function getGames($SteamId)
+    {
+        $owned_games = Steam::player($SteamId)->GetOwnedGames(true, true);
+
+        // Open a new connection for Cypher queries. BAD CODE!
+        $client = new Everyman\Neo4j\Client();
+
+        // Check if the user is in there already
+        $player = Steam::user($SteamId)->GetPlayerSummaries()[0];
+        $player_match_query_string = "MATCH (n { steamId: '{$player->steamId}'}) RETURN n";
+        $player_match_query = new Everyman\Neo4j\Cypher\Query($client, $player_match_query_string);
+        $player_match_result = $player_match_query->getResultSet();
+        if (count($player_match_result) == 0)
+        {
+            // Add the player to database
+            $player_create_string = "
+                CREATE (n:Player {
+                    steamId: '{$player->steamId}',
+                    personaName: '". addslashes($friend->personaName) ."',
+                    lastLogoff: '{$player->lastLogoff}',
+                    profileUrl: '{$player->profileUrl}',
+                    avatarUrl: '{$player->avatarUrl}',
+                    avatarMediumUrl: '{$player->avatarMediumUrl}',
+                    avatarFullUrl: '{$player->avatarFullUrl}',
+                    personaStateId: '{$player->personaStateId}',
+                    realName: '{$player->realName}',
+                    primaryClanId: '{$player->primaryClanId}',
+                    timecreated: '{$player->timecreated}',
+                    locCountryCode: '{$player->locCountryCode}',
+                    locStateCode: '{$player->locStateCode}',
+                    locCityId: '{$player->locCityId}'
+                })
+                RETURN n
+            ";
+            $player_create_query = new Everyman\Neo4j\Cypher\Query($client, $player_create_string);
+            $player_create_result = $player_create_query->getResultSet();
+        }
+
+        foreach($owned_games as $game)
+        {
+            // Check if the game is already saved
+            $game_match_query_string = "MATCH (n { appId: {$game->appId}}) RETURN n";
+            $game_match_query = new Everyman\Neo4j\Cypher\Query($client, $game_match_query_string);
+            $game_match_result = $game_match_query->getResultSet();
+            if (count($game_match_result) == 0)
+            {
+                // Add games to database
+                $game_create_string = "
+                    CREATE (n:Game {
+                        appId: '{$game->appId}',
+                        name: '". addslashes($game->name) ."',
+                        icon: '{$game->icon}',
+                        logo: '{$game->logo}',
+                        header: '{$game->header}'
+                    })
+                    RETURN n
+                ";
+                $game_create_query = new Everyman\Neo4j\Cypher\Query($client, $game_create_string);
+                $game_create_result = $game_create_query->getResultSet();
             }
 
-            // Check if these guys are saved as friends
-            $friends_query_string = "match (n {steamId:'{$player_original->steamId}'})-[r:FRIEND_WITH]-(m {steamId: '{$player_node->steamId}'}) return n,m";
-            $friends_query = new Everyman\Neo4j\Cypher\Query($client, $friends_query_string);
-            $friends_result = $friends_query->getResultSet();
-            if (count($friends_result) == 0)
-            {
-                // Make them friends
-                $player_original->relateTo(
-                    $player_node
-                    , 'FRIEND_WITH'
-                )->save();
+            $player_plays_game_string = "
+                MATCH
+                    (n:Player {steamId: '{$player->steamId}'}), (m:Game {appId:'{$game->appId}'})
+                CREATE UNIQUE
+                    (n)-[r:PLAYS]->(m)
+                SET
+                    r.appId='{$game->appId}',
+                    r.name='". addslashes($game->name) ."',
+                    r.icon='{$game->icon}',
+                    r.logo='{$game->logo}',
+                    r.header='{$game->header}'
+                RETURN n,r,m
+            ";
+            $player_plays_game_query = new Everyman\Neo4j\Cypher\Query($client, $player_plays_game_string);
+            $player_plays_game_result = $player_plays_game_query->getResultSet();
 
-                //
-                $player_node->relateTo(
-                    $player_original
-                    , 'FRIEND_WITH'
-                )->save();
-
-                echo "Created friendship {$player_original->personaName} <-> {$player_node->personaName} <br />\n";
-            }
-            else
-            {
-                echo "Already friends {$player_original->personaName} <-> {$player_node->personaName} <br />\n";
-            }
         }
     }
 

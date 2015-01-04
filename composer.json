@@ -9,7 +9,6 @@
 		"syntax/steam-api": "dev-master",
 		"ehesp/steam-login": "~1.0.1",
 		"everyman/neo4jphp": "dev-master",
-		"artdarek/neo4j-4-laravel": "dev-master",
 		"way/generators": "~3.0"
 	},
 	"autoload": {
