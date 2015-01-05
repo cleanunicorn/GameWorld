@@ -15,4 +15,5 @@ Route::get('/', 'HomeController@getHome');
 Route::get('/login', 'HomeController@getLogin');
 Route::get('/logged', 'HomeController@getLogged');
 Route::get('/friends/{SteamId}', 'HomeController@getFriends');
+Route::get('/friends-games/{SteamId}', 'HomeController@getFriendsGames');
 Route::get('/games/{SteamId}', 'HomeController@getGames');

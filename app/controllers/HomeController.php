@@ -99,11 +99,8 @@ class HomeController extends BaseController {
                 CREATE UNIQUE
                     (n)-[r:PLAYS]->(m)
                 SET
-                    r.appId='{$game->appId}',
-                    r.name='". addslashes($game->name) ."',
-                    r.icon='{$game->icon}',
-                    r.logo='{$game->logo}',
-                    r.header='{$game->header}'
+                    r.playtimeTwoWeeks='{$game->playtimeTwoWeeks}',
+                    r.playtimeForever='". addslashes($game->playtimeForever) ."'
                 RETURN n,r,m
             ";
             $player_plays_game_query = new Everyman\Neo4j\Cypher\Query($client, $player_plays_game_string);
@@ -193,7 +190,15 @@ class HomeController extends BaseController {
 
     public function getGames($SteamId)
     {
-        $owned_games = Steam::player($SteamId)->GetOwnedGames(true, true);
+        try
+        {
+            $owned_games = Steam::player($SteamId)->GetOwnedGames(true, true);
+        }
+        catch (Exception $e)
+        {
+            echo 'fucking exception..';
+            return false;
+        }
 
         // Open a new connection for Cypher queries. BAD CODE!
         $client = new Everyman\Neo4j\Client();
@@ -258,17 +263,30 @@ class HomeController extends BaseController {
                 CREATE UNIQUE
                     (n)-[r:PLAYS]->(m)
                 SET
-                    r.appId='{$game->appId}',
-                    r.name='". addslashes($game->name) ."',
-                    r.icon='{$game->icon}',
-                    r.logo='{$game->logo}',
-                    r.header='{$game->header}'
+                    r.playtimeTwoWeeks='{$game->playtimeTwoWeeks}',
+                    r.playtimeForever='". addslashes($game->playtimeForever) ."'
                 RETURN n,r,m
             ";
             $player_plays_game_query = new Everyman\Neo4j\Cypher\Query($client, $player_plays_game_string);
             $player_plays_game_result = $player_plays_game_query->getResultSet();
 
         }
+    }
+
+    public function getFriendsGames($SteamId)
+    {
+        $client = new Everyman\Neo4j\Client();
+
+        $friends_string = "MATCH (m)-[r:FRIEND]-(n {steamId:'{$SteamId}'}) RETURN m";
+        $friends_query = new Everyman\Neo4j\Cypher\Query($client, $friends_string);
+        $friends_result = $friends_query->getResultSet();
+
+        foreach($friends_result as $friend)
+        {
+            echo "{$friend['m']->steamId}<br />\n";
+            $this->getGames($friend['m']->steamId);
+        }
+
     }
 
 
