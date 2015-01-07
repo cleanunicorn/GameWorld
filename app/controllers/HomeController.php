@@ -93,13 +93,15 @@ class HomeController extends BaseController {
                 $game_create_result = $game_create_query->getResultSet();
             }
 
+            $game_playtimeTwoWeeks = (strtotime($game->playtimeTwoWeeks) - date('U')) / 60;
+
             $player_plays_game_string = "
                 MATCH
                     (n:Player {steamId: '{$player->steamId}'}), (m:Game {appId:'{$game->appId}'})
                 CREATE UNIQUE
                     (n)-[r:PLAYS]->(m)
                 SET
-                    r.playtimeTwoWeeks='{$game->playtimeTwoWeeks}',
+                    r.playtimeTwoWeeks={$game_playtimeTwoWeeks},
                     r.playtimeForever='". addslashes($game->playtimeForever) ."'
                 RETURN n,r,m
             ";
@@ -257,13 +259,15 @@ class HomeController extends BaseController {
                 $game_create_result = $game_create_query->getResultSet();
             }
 
+            $game_playtimeTwoWeeks = (strtotime($game->playtimeTwoWeeks) - date('U')) / 60;
+
             $player_plays_game_string = "
                 MATCH
                     (n:Player {steamId: '{$player->steamId}'}), (m:Game {appId:'{$game->appId}'})
                 CREATE UNIQUE
                     (n)-[r:PLAYS]->(m)
                 SET
-                    r.playtimeTwoWeeks='{$game->playtimeTwoWeeks}',
+                    r.playtimeTwoWeeks={$game_playtimeTwoWeeks},
                     r.playtimeForever='". addslashes($game->playtimeForever) ."'
                 RETURN n,r,m
             ";

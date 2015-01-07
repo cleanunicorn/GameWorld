@@ -127,7 +127,6 @@ return array(
         'Ehesp\SteamLogin\Laravel\SteamLoginServiceProvider',
         // Way Generators
         'Way\Generators\GeneratorsServiceProvider',
-
 	),
 
 	/*
@@ -195,7 +194,6 @@ return array(
 		'Validator'         => 'Illuminate\Support\Facades\Validator',
 		'View'              => 'Illuminate\Support\Facades\View',
         'SteamLogin'        => 'Ehesp\SteamLogin\Laravel\Facades\SteamLogin',
-
 	),
 
 );

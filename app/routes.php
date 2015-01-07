@@ -19,3 +19,4 @@ Route::get('/friends-games/{SteamId}', 'HomeController@getFriendsGames');
 Route::get('/games/{SteamId}', 'HomeController@getGames');
 
 Route::get('/recommend/by-friends/{SteamId}', 'RecommendController@getByFriends');
+Route::get('/recommend/by-friends-play-time/{SteamId}', 'RecommendController@getByFriendsPlayTime');

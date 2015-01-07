@@ -68,14 +68,48 @@ LIMIT 100
 
     }
 
-    public function getByPlayTime()
+    public function getByFriendsPlayTime($SteamId)
     {
-
 /*
-MATCH (n {steamId:'76561197987217337'})-[r:PLAYS]-(game)
-RETURN game,n,r,toInt(r.playtimeForever) AS playtime, toInt(r.playtimeTwoWeeks) as playtimeTwoWeeks
-ORDER BY playtimeTwoWeeks DESC
-*/
+MATCH (n:Player {steamId:'76561197991639729'})-[r:FRIEND]-(friend:Player)
+WITH DISTINCT friend
+MATCH (friend:Player)-[r:PLAYS]->(game:Game)
+
+MATCH (n:Player {steamId:'76561197991639729'})
+WHERE NOT n--(game:Game)
+WITH DISTINCT game
+
+MATCH (n:Player {steamId:'76561197991639729'})-[r:FRIEND]-(friend:Player)-[play:PLAYS]-(game:Game)
+WITH game,
+	SUM(play.playtimeTwoWeeks) AS total_playtimeTwoWeeks
+ORDER BY total_playtimeTwoWeeks DESC
+RETURN game, total_playtimeTwoWeeks
+LIMIT 1000*/
+
+        $games_friends_play_string = "
+            MATCH (n:Player {steamId:'{$SteamId}'})-[r:FRIEND]-(friend:Player)
+            WITH DISTINCT friend
+            MATCH (friend:Player)-[r:PLAYS]->(game:Game)
+
+            MATCH (n:Player {steamId:'{$SteamId}'})
+            WHERE NOT n--(game:Game)
+            WITH DISTINCT game
+
+            MATCH (n:Player {steamId:'{$SteamId}'})-[r:FRIEND]-(friend:Player)-[play:PLAYS]-(game:Game)
+            WITH game,
+                SUM(play.playtimeTwoWeeks) AS total_playtimeTwoWeeks
+            ORDER BY total_playtimeTwoWeeks DESC
+            RETURN game, total_playtimeTwoWeeks
+            LIMIT 100
+        ";
+        $games_friends_play_query = new Everyman\Neo4j\Cypher\Query($this->client, $games_friends_play_string);
+        $games_friends_play_result = $games_friends_play_query->getResultSet();
+
+        foreach($games_friends_play_result as $game)
+        {
+            echo "<a href='http://store.steampowered.com/app/{$game[0]->appId}/'>{$game[0]->name}</a> <br />\n";
+            echo "<img src='{$game[0]->logo}' /> <br />\n";
+        }
 
     }
 
